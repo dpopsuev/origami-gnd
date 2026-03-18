@@ -6,6 +6,7 @@ description: "Red Hat Data Source Retriever — pluggable code context gathering
 factory: NewRouter
 serve: cmd/serve
 adapter: NewMCPReader
+resolver: SchematicResolver
 requires:
   origami: ">=0.3.0"
   sockets:
