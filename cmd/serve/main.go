@@ -1,8 +1,9 @@
-// Command serve runs the harvester schematic as an MCP server over
-// Streamable HTTP. It exposes harvester Reader operations as MCP tools
-// (ensure, search, read, list) for consumption by other schematics.
+// Command serve runs the GND (Gather & Diffuse) schematic as a Papercup
+// circuit server over Streamable HTTP. It exposes the GND circuit
+// (tree → search → read → synthesize) via the standard Papercup protocol
+// (start_circuit, get_next_step, submit_step, get_report).
 //
-// Usage: serve [--port=9100] [--driver=git,docs]
+// Usage: serve [--port=9100] [--drivers=git,docs]
 package main
 
 import (
@@ -20,6 +21,7 @@ import (
 	"github.com/dpopsuev/origami/connectors/docs"
 	"github.com/dpopsuev/origami/connectors/github"
 	dsr "github.com/dpopsuev/rh-dsr"
+	"github.com/dpopsuev/rh-dsr/mcpconfig"
 )
 
 func main() {
@@ -36,7 +38,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	var opts []dsr.RouterOption
+	var routerOpts []dsr.RouterOption
 	if *drivers != "" {
 		for _, name := range strings.Split(*drivers, ",") {
 			name = strings.TrimSpace(name)
@@ -46,36 +48,29 @@ func main() {
 				if err != nil {
 					log.Fatalf("create git driver: %v", err)
 				}
-				opts = append(opts, dsr.WithGitDriver(d))
+				routerOpts = append(routerOpts, dsr.WithGitDriver(d))
 				log.Printf("registered driver: git")
 			case "docs":
 				d, err := docs.DefaultDocsDriver()
 				if err != nil {
 					log.Fatalf("create docs driver: %v", err)
 				}
-				opts = append(opts, dsr.WithDocsDriver(d))
+				routerOpts = append(routerOpts, dsr.WithDocsDriver(d))
 				log.Printf("registered driver: docs")
 			default:
 				log.Fatalf("unknown driver %q (known: git, docs)", name)
 			}
 		}
 	}
-	router := dsr.NewRouter(opts...)
+	router := dsr.NewRouter(routerOpts...)
 
-	server := sdkmcp.NewServer(
-		&sdkmcp.Implementation{Name: "origami-harvester", Version: "v0.1.0"},
-		nil,
+	server := mcpconfig.NewServer(
+		mcpconfig.WithReader(router),
 	)
 
-	dsr.RegisterTools(server, router)
-	dsr.RegisterSynthesizeTool(server, dsr.SynthesizeToolOpts{
-		Synthesizer: &dsr.StructuralSynthesizer{},
-		Router:      router,
-	})
-
 	mcpHandler := sdkmcp.NewStreamableHTTPHandler(
-		func(_ *http.Request) *sdkmcp.Server { return server },
-		&sdkmcp.StreamableHTTPOptions{Stateless: true},
+		func(_ *http.Request) *sdkmcp.Server { return server.MCPServer },
+		&sdkmcp.StreamableHTTPOptions{Stateless: false},
 	)
 
 	mux := http.NewServeMux()
@@ -102,9 +97,8 @@ func main() {
 		httpServer.Shutdown(context.Background())
 	}()
 
-	log.Printf("harvester schematic listening on %s", addr)
+	log.Printf("gnd circuit server listening on %s", addr)
 	if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("server error: %v", err)
 	}
 }
-

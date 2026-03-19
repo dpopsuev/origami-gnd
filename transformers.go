@@ -2,9 +2,12 @@ package dsr
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 
 	framework "github.com/dpopsuev/origami"
+	"github.com/dpopsuev/origami/dispatch"
 	"github.com/dpopsuev/origami/schematics/toolkit"
 )
 
@@ -43,9 +46,9 @@ type FileContent struct {
 	Truncated bool   `json:"truncated,omitempty"`
 }
 
-// TransformerComponent returns a Component containing the Harvester circuit
-// transformers: tree, search, read. These are deterministic transformers
-// that wrap SourceReader operations.
+// TransformerComponent returns a Component containing the GND circuit's
+// deterministic transformers: tree, search, read. These wrap SourceReader
+// operations and require no LLM dispatch.
 func TransformerComponent(reader toolkit.SourceReader, catalog toolkit.SourceCatalog) *framework.Component {
 	return &framework.Component{
 		Namespace:   "dsr",
@@ -56,6 +59,136 @@ func TransformerComponent(reader toolkit.SourceReader, catalog toolkit.SourceCat
 			"read":   newReadTransformer(reader, catalog),
 		},
 	}
+}
+
+// SynthesizeComponent returns a Component containing the synthesize transformer.
+// When disp is nil, the transformer passes through CodeContext from the read
+// node (deterministic mode). When set, it builds a prompt and dispatches via
+// the MuxDispatcher for LLM synthesis.
+func SynthesizeComponent(disp dispatch.Dispatcher) *framework.Component {
+	return &framework.Component{
+		Namespace: "dsr",
+		Name:      "dsr-synthesize",
+		Transformers: framework.TransformerRegistry{
+			"synthesize": &synthesizeTransformer{dispatcher: disp},
+		},
+	}
+}
+
+// synthesizeTransformer reads CodeContext from the read node output, builds
+// a prompt, and dispatches via MuxDispatcher. If no dispatcher is set
+// (stub/deterministic mode), it passes through the raw CodeContext.
+type synthesizeTransformer struct {
+	dispatcher dispatch.Dispatcher // nil = deterministic passthrough
+}
+
+func (t *synthesizeTransformer) Name() string { return "dsr.synthesize" }
+
+func (t *synthesizeTransformer) Deterministic() bool { return t.dispatcher == nil }
+
+func (t *synthesizeTransformer) Transform(ctx context.Context, tc *framework.TransformerContext) (any, error) {
+	cc, ok := outputArtifact[*CodeContext](tc.WalkerState, "read")
+	if !ok {
+		return &CodeContext{}, nil
+	}
+
+	if t.dispatcher == nil {
+		return cc, nil
+	}
+
+	prompt := buildSynthesizePrompt(cc)
+
+	caseLabel := tc.WalkerState.ID
+	data, err := t.dispatcher.Dispatch(ctx, dispatch.DispatchContext{
+		CaseID:        caseLabel,
+		Step:          "synthesize",
+		PromptContent: prompt,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("dsr.synthesize dispatch: %w", err)
+	}
+
+	var result map[string]any
+	if err := json.Unmarshal(cleanJSON(data), &result); err != nil {
+		return &SynthesizeResult{
+			Summary:     string(data),
+			CodeContext: cc,
+		}, nil
+	}
+
+	sr := &SynthesizeResult{CodeContext: cc}
+	if s, ok := result["summary"].(string); ok {
+		sr.Summary = s
+	}
+	if kf, ok := result["key_findings"].([]any); ok {
+		for _, f := range kf {
+			if s, ok := f.(string); ok {
+				sr.KeyFindings = append(sr.KeyFindings, s)
+			}
+		}
+	}
+	return sr, nil
+}
+
+// SynthesizeResult is the output of the synthesize node.
+type SynthesizeResult struct {
+	Summary     string       `json:"summary"`
+	KeyFindings []string     `json:"key_findings,omitempty"`
+	CodeContext *CodeContext  `json:"code_context,omitempty"`
+}
+
+func buildSynthesizePrompt(cc *CodeContext) string {
+	var b strings.Builder
+	b.WriteString("Synthesize the following gathered code context into a cohesive summary.\n\n")
+
+	if len(cc.Trees) > 0 {
+		b.WriteString("## Repository Trees\n\n")
+		for _, t := range cc.Trees {
+			b.WriteString(fmt.Sprintf("### %s (branch: %s)\n", t.Repo, t.Branch))
+			for _, e := range t.Entries {
+				b.WriteString(fmt.Sprintf("  %s\n", e.Path))
+			}
+			b.WriteString("\n")
+		}
+	}
+
+	if len(cc.SearchResults) > 0 {
+		b.WriteString("## Search Results\n\n")
+		for _, sr := range cc.SearchResults {
+			b.WriteString(fmt.Sprintf("- %s:%s:%d — %s\n", sr.Repo, sr.File, sr.Line, sr.Snippet))
+		}
+		b.WriteString("\n")
+	}
+
+	if len(cc.Files) > 0 {
+		b.WriteString("## File Contents\n\n")
+		for _, f := range cc.Files {
+			b.WriteString(fmt.Sprintf("### %s:%s\n```\n%s\n```\n\n", f.Repo, f.Path, f.Content))
+		}
+	}
+
+	b.WriteString("Respond with JSON: {\"summary\": \"...\", \"key_findings\": [\"...\"]}\n")
+	return b.String()
+}
+
+// cleanJSON strips markdown code fences from LLM responses.
+func cleanJSON(data []byte) []byte {
+	s := strings.TrimSpace(string(data))
+	if idx := strings.Index(s, "```json"); idx >= 0 {
+		s = s[idx+len("```json"):]
+		if end := strings.LastIndex(s, "```"); end >= 0 {
+			s = s[:end]
+		}
+		return []byte(strings.TrimSpace(s))
+	}
+	if idx := strings.Index(s, "```"); idx >= 0 {
+		s = s[idx+len("```"):]
+		if end := strings.LastIndex(s, "```"); end >= 0 {
+			s = s[:end]
+		}
+		return []byte(strings.TrimSpace(s))
+	}
+	return data
 }
 
 // treeTransformer ensures all repo sources are available and lists

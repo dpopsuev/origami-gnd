@@ -9,8 +9,10 @@ import (
 	_ "github.com/dpopsuev/origami/topology"
 )
 
-const harvesterCircuitYAML = `
-circuit: harvester
+// gatherOnlyCircuitYAML is a legacy 3-node circuit (tree→search→read)
+// used by tests that don't need the synthesize step.
+const gatherOnlyCircuitYAML = `
+circuit: gnd
 topology: cascade
 handler_type: transformer
 nodes:
@@ -53,7 +55,7 @@ func TestCircuit_Walk(t *testing.T) {
 	}
 	catalog := txCatalog()
 
-	def, err := framework.LoadCircuit([]byte(harvesterCircuitYAML))
+	def, err := framework.LoadCircuit([]byte(gatherOnlyCircuitYAML))
 	if err != nil {
 		t.Fatalf("LoadCircuit: %v", err)
 	}
@@ -105,11 +107,72 @@ func TestCircuit_Walk(t *testing.T) {
 	}
 }
 
+func TestCircuit_FullWithSynthesize(t *testing.T) {
+	reader := &txReader{
+		listings: map[string][]toolkit.ContentEntry{
+			"acme/repo1": {
+				{Path: "main.go", IsDir: false},
+			},
+		},
+		searches: map[string][]toolkit.SearchResult{
+			"acme/repo1": {
+				{Path: "main.go", Line: 10, Snippet: "func TestPTP()"},
+			},
+		},
+		files: map[string][]byte{
+			"acme/repo1:main.go": []byte("package main\n"),
+		},
+	}
+	catalog := txCatalog()
+
+	// Use embedded circuit YAML (includes synthesize node).
+	def, err := framework.LoadCircuit(DefaultCircuitYAML())
+	if err != nil {
+		t.Fatalf("LoadCircuit: %v", err)
+	}
+
+	gatherComp := TransformerComponent(reader, catalog)
+	synthComp := SynthesizeComponent(nil) // deterministic passthrough
+	reg, err := framework.MergeComponents(framework.GraphRegistries{}, gatherComp, synthComp)
+	if err != nil {
+		t.Fatalf("MergeComponents: %v", err)
+	}
+
+	g, err := def.BuildGraph(reg)
+	if err != nil {
+		t.Fatalf("BuildGraph: %v", err)
+	}
+
+	walker := framework.NewProcessWalker("test-gnd-full")
+	walker.State().Context["dsr.search_keywords"] = []string{"TestPTP"}
+
+	if err := g.Walk(context.Background(), walker, "tree"); err != nil {
+		t.Fatalf("Walk: %v", err)
+	}
+
+	// Verify all 4 nodes produced outputs.
+	for _, name := range []string{"tree", "search", "read", "synthesize"} {
+		if _, ok := walker.State().Outputs[name]; !ok {
+			t.Errorf("missing output for node %q", name)
+		}
+	}
+
+	// In deterministic mode, synthesize passes through the CodeContext.
+	synthArt := walker.State().Outputs["synthesize"]
+	cc, ok := synthArt.Raw().(*CodeContext)
+	if !ok {
+		t.Fatalf("synthesize artifact Raw() type = %T, want *CodeContext", synthArt.Raw())
+	}
+	if len(cc.Files) != 1 {
+		t.Errorf("files = %d, want 1", len(cc.Files))
+	}
+}
+
 func TestCircuit_EmptyCatalog(t *testing.T) {
 	reader := &txReader{}
 	emptyCatalog := &toolkit.SliceCatalog{}
 
-	def, err := framework.LoadCircuit([]byte(harvesterCircuitYAML))
+	def, err := framework.LoadCircuit([]byte(gatherOnlyCircuitYAML))
 	if err != nil {
 		t.Fatalf("LoadCircuit: %v", err)
 	}

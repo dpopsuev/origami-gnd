@@ -1,25 +1,27 @@
-# Harvester Circuit — Schematic Base
+# GND Circuit — Gather & Diffuse
 #
-# Canonical circuit topology owned by the Harvester schematic. Consumers import
-# this base via `import: harvester` and overlay domain-specific additions.
+# Canonical circuit topology owned by the GND schematic. Consumers import
+# this base via `import: gnd` and overlay domain-specific additions.
 #
-# Gathers code context from configured source repositories.
+# Gathers code context from configured source repositories, then
+# synthesizes a cohesive domain artifact via LLM diffusion.
 # Designed for composition: any circuit can invoke this as a
 # subgraph node via handler_type: circuit.
 #
 # Pipeline:
-#   tree   — ensure repos are available, list file trees
-#   search — search repos for relevant code using context keywords
-#   read   — read matched files (token-budgeted)
+#   tree       — ensure repos are available, list file trees
+#   search     — search repos for relevant code using context keywords
+#   read       — read matched files (token-budgeted)
+#   synthesize — diffuse gathered context into cohesive artifact (LLM)
 #
 # Input context (inherited from parent):
-#   harvester.search_keywords — []string of search terms
-#   params.sources            — source catalog (set by inject.sources hook)
+#   dsr.search_keywords — []string of search terms
+#   params.sources      — source catalog (set by inject.sources hook)
 #
-# Output: the "read" node produces a *harvester.CodeContext artifact
-# containing trees, search results, and file contents.
+# Output: the "synthesize" node produces a synthesized domain artifact.
+# In deterministic mode (no dispatcher), passes through *CodeContext.
 
-circuit: harvester
+circuit: gnd
 topology: cascade
 handler_type: transformer
 
@@ -39,6 +41,11 @@ nodes:
     approach: methodical
     handler: dsr.read
 
+  - name: synthesize
+    description: "Synthesize gathered code context into cohesive domain artifact"
+    approach: creative
+    handler: dsr.synthesize
+
 edges:
   - id: tree-search
     name: "Tree to Search"
@@ -50,9 +57,14 @@ edges:
     from: search
     to: read
 
-  - id: read-done
-    name: "Read to Done"
+  - id: read-synthesize
+    name: "Read to Synthesize"
     from: read
+    to: synthesize
+
+  - id: synthesize-done
+    name: "Synthesize to Done"
+    from: synthesize
     to: _done
 
 start: tree
