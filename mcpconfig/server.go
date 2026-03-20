@@ -168,6 +168,7 @@ func (s *Server) createSession(_ context.Context, params fwmcp.StartParams, disp
 				},
 			},
 			Parallel: 1,
+			Observer: params.Observer,
 		})
 
 		if len(results) == 0 {
