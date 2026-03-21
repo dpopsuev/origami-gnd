@@ -57,10 +57,6 @@ func (s *Server) buildConfig() fwmcp.CircuitConfig {
 		StepSchemas: []fwmcp.StepSchema{
 			{
 				Name: "synthesize",
-				Fields: map[string]string{
-					"summary":      "string",
-					"key_findings": "array",
-				},
 				Defs: []fwmcp.FieldDef{
 					{Name: "summary", Type: "string", Required: true, Desc: "Cohesive summary of gathered code context"},
 					{Name: "key_findings", Type: "array", Required: false, Desc: "Key findings from code analysis"},
