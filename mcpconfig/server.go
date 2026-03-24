@@ -9,6 +9,8 @@ import (
 	"github.com/dpopsuev/origami/circuit"
 	"github.com/dpopsuev/origami/engine"
 	"github.com/dpopsuev/origami/dispatch"
+	bd "github.com/dpopsuev/bugle/dispatch"
+	"github.com/dpopsuev/bugle/signal"
 	fwmcp "github.com/dpopsuev/origami/mcp"
 	dsr "github.com/dpopsuev/rh-gnd"
 	"github.com/dpopsuev/origami/schematics/toolkit"
@@ -72,7 +74,7 @@ func (s *Server) buildConfig() fwmcp.CircuitConfig {
 		WorkerPreamble:            "You are a GND (Gather & Diffuse) code context worker.",
 		DefaultGetNextStepTimeout: 10000,
 		DefaultSessionTTL:         300000,
-		CreateSession: func(ctx context.Context, params fwmcp.StartParams, disp *dispatch.MuxDispatcher, bus *dispatch.SignalBus) (fwmcp.RunFunc, fwmcp.SessionMeta, error) {
+		CreateSession: func(ctx context.Context, params fwmcp.StartParams, disp *dispatch.MuxDispatcher, bus signal.Bus) (fwmcp.RunFunc, fwmcp.SessionMeta, error) {
 			return s.createSession(ctx, params, disp, bus)
 		},
 		FormatReport: func(result any) (string, any, error) {
@@ -85,7 +87,7 @@ func (s *Server) buildConfig() fwmcp.CircuitConfig {
 	}
 }
 
-func (s *Server) createSession(_ context.Context, params fwmcp.StartParams, disp *dispatch.MuxDispatcher, _ *dispatch.SignalBus) (fwmcp.RunFunc, fwmcp.SessionMeta, error) {
+func (s *Server) createSession(_ context.Context, params fwmcp.StartParams, disp *dispatch.MuxDispatcher, _ signal.Bus) (fwmcp.RunFunc, fwmcp.SessionMeta, error) {
 	extra := params.Extra
 
 	// Resolve reader and catalog — use injected defaults, allow override from extra.
@@ -126,7 +128,7 @@ func (s *Server) createSession(_ context.Context, params fwmcp.StartParams, disp
 
 	// Determine backend: stub (deterministic passthrough) or llm (dispatched).
 	backendStr, _ := extra["backend"].(string)
-	var synthDisp dispatch.Dispatcher
+	var synthDisp bd.Dispatcher
 	if backendStr == "llm" {
 		synthDisp = disp
 	}

@@ -8,7 +8,7 @@ import (
 
 	"github.com/dpopsuev/origami/circuit"
 	"github.com/dpopsuev/origami/engine"
-	"github.com/dpopsuev/origami/dispatch"
+	bd "github.com/dpopsuev/bugle/dispatch"
 	"github.com/dpopsuev/origami/schematics/toolkit"
 )
 
@@ -66,7 +66,7 @@ func TransformerComponent(reader toolkit.SourceReader, catalog toolkit.SourceCat
 // When disp is nil, the transformer passes through CodeContext from the read
 // node (deterministic mode). When set, it builds a prompt and dispatches via
 // the MuxDispatcher for LLM synthesis.
-func SynthesizeComponent(disp dispatch.Dispatcher) *engine.Component {
+func SynthesizeComponent(disp bd.Dispatcher) *engine.Component {
 	return &engine.Component{
 		Namespace: "dsr",
 		Name:      "dsr-synthesize",
@@ -80,7 +80,7 @@ func SynthesizeComponent(disp dispatch.Dispatcher) *engine.Component {
 // a prompt, and dispatches via MuxDispatcher. If no dispatcher is set
 // (stub/deterministic mode), it passes through the raw CodeContext.
 type synthesizeTransformer struct {
-	dispatcher dispatch.Dispatcher // nil = deterministic passthrough
+	dispatcher bd.Dispatcher // nil = deterministic passthrough
 }
 
 func (t *synthesizeTransformer) Name() string { return "dsr.synthesize" }
@@ -100,7 +100,7 @@ func (t *synthesizeTransformer) Transform(ctx context.Context, tc *engine.Transf
 	prompt := buildSynthesizePrompt(cc)
 
 	caseLabel := tc.WalkerState.ID
-	data, err := t.dispatcher.Dispatch(ctx, dispatch.DispatchContext{
+	data, err := t.dispatcher.Dispatch(ctx, bd.Context{
 		CaseID:        caseLabel,
 		Step:          "synthesize",
 		PromptContent: prompt,

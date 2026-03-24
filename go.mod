@@ -1,6 +1,6 @@
 module github.com/dpopsuev/rh-gnd
 
-go 1.24.2
+go 1.25.7
 
 require (
 	github.com/dpopsuev/origami v0.0.0
@@ -11,6 +11,7 @@ require (
 require (
 	github.com/clipperhouse/stringish v0.1.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.5.0 // indirect
+	github.com/dpopsuev/bugle v0.4.0
 	github.com/expr-lang/expr v1.17.8 // indirect
 	github.com/google/jsonschema-go v0.4.2 // indirect
 	github.com/jedib0t/go-pretty/v6 v6.7.8 // indirect
@@ -22,8 +23,10 @@ require (
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/text v0.33.0 // indirect
-	golang.org/x/time v0.14.0 // indirect
+	golang.org/x/time v0.15.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 replace github.com/dpopsuev/origami => ../origami
+
+replace github.com/dpopsuev/bugle => ../bugle
