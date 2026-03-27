@@ -58,7 +58,8 @@ func (c *Capturer) Capture(ctx context.Context, cfg calibrate.CaptureConfig) err
 	manifest.Schematic = gndSchematic
 	manifest.CapturedAt = time.Now().UTC()
 
-	for _, src := range sources {
+	for i := range sources {
+		src := sources[i]
 		if err := ctx.Err(); err != nil {
 			return err
 		}
@@ -85,7 +86,7 @@ func (c *Capturer) Capture(ctx context.Context, cfg calibrate.CaptureConfig) err
 	return calibrate.WriteManifest(outDir, &manifest)
 }
 
-func (c *Capturer) captureRepo(ctx context.Context, src toolkit.Source, outDir string) (calibrate.RepoEntry, error) {
+func (c *Capturer) captureRepo(ctx context.Context, src toolkit.Source, outDir string) (calibrate.RepoEntry, error) { //nolint:gocritic // hugeParam: Source is a value type in the toolkit API
 	c.logger.Info("capturing repo", "name", src.Name, "branch", src.Branch)
 
 	if err := c.reader.Ensure(ctx, src); err != nil {
@@ -99,7 +100,7 @@ func (c *Capturer) captureRepo(ctx context.Context, src toolkit.Source, outDir s
 
 	repoDir := filepath.Join(outDir, "repos", src.Name)
 	hasher := sha256.New()
-	var files []string
+	files := make([]string, 0, len(entries))
 
 	for _, e := range entries {
 		if e.IsDir {
@@ -138,7 +139,7 @@ func (c *Capturer) captureRepo(ctx context.Context, src toolkit.Source, outDir s
 	}, nil
 }
 
-func (c *Capturer) captureDoc(ctx context.Context, src toolkit.Source, outDir string) (calibrate.DocEntry, error) {
+func (c *Capturer) captureDoc(ctx context.Context, src toolkit.Source, outDir string) (calibrate.DocEntry, error) { //nolint:gocritic // hugeParam: Source is a value type in the toolkit API
 	c.logger.Info("capturing doc", "name", src.Name)
 
 	data, err := c.reader.Read(ctx, src, "/")

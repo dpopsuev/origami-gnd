@@ -11,6 +11,11 @@ import (
 	yaml "go.yaml.in/yaml/v3"
 )
 
+const (
+	extYAML = ".yaml"
+	extJSON = ".json"
+)
+
 // LoadFromPath reads a GND source catalog file (YAML or JSON).
 func LoadFromPath(path string) (*toolkit.SliceCatalog, error) {
 	data, err := os.ReadFile(path)
@@ -25,16 +30,16 @@ func LoadFromPath(path string) (*toolkit.SliceCatalog, error) {
 func Load(data []byte, ext string) (*toolkit.SliceCatalog, error) {
 	ext = strings.ToLower(ext)
 	if ext == ".yml" {
-		ext = ".yaml"
+		ext = extYAML
 	}
 
 	var raw rawCatalog
 	var err error
 
 	switch ext {
-	case ".yaml":
+	case extYAML:
 		err = yaml.Unmarshal(data, &raw)
-	case ".json":
+	case extJSON:
 		err = json.Unmarshal(data, &raw)
 	default:
 		trimmed := strings.TrimSpace(string(data))

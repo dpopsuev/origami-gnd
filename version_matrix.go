@@ -62,7 +62,7 @@ func (vm *VersionMatrix) ResolveBranch(version, fallback string) string {
 // ResolveSource returns a copy of the source with its Branch set to the
 // version-resolved branch. If the version is not in the matrix, the
 // source is returned unchanged.
-func (vm *VersionMatrix) ResolveSource(src toolkit.Source, version string) toolkit.Source {
+func (vm *VersionMatrix) ResolveSource(src toolkit.Source, version string) toolkit.Source { //nolint:gocritic // hugeParam: Source is a value type in the toolkit API; returns modified copy
 	entry := vm.Resolve(version)
 	if entry == nil {
 		return src

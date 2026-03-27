@@ -62,8 +62,8 @@ func (ss *StructuralSynthesizer) Synthesize(
 		GeneratedAt: time.Now(),
 	}
 
-	for _, src := range sources {
-		result.Sources = append(result.Sources, src.Name)
+	for i := range sources {
+		result.Sources = append(result.Sources, sources[i].Name)
 	}
 
 	if sectionSet[SectionComponentMap] {
@@ -89,12 +89,12 @@ func (ss *StructuralSynthesizer) buildComponentMap(sources []toolkit.Source) str
 	var b strings.Builder
 	b.WriteString("| Component | Org | Purpose | Branch |\n")
 	b.WriteString("|-----------|-----|---------|--------|\n")
-	for _, src := range sources {
-		if src.Kind != toolkit.SourceKindRepo {
+	for i := range sources {
+		if sources[i].Kind != toolkit.SourceKindRepo {
 			continue
 		}
 		b.WriteString(fmt.Sprintf("| %s | %s | %s | %s |\n",
-			src.Name, src.Org, src.Purpose, src.Branch))
+			sources[i].Name, sources[i].Org, sources[i].Purpose, sources[i].Branch))
 	}
 	return b.String()
 }
@@ -103,29 +103,29 @@ func (ss *StructuralSynthesizer) buildSourceIndex(sources []toolkit.Source) stri
 	var b strings.Builder
 
 	var repos, docs []toolkit.Source
-	for _, s := range sources {
-		switch s.Kind {
+	for i := range sources {
+		switch sources[i].Kind {
 		case toolkit.SourceKindRepo:
-			repos = append(repos, s)
+			repos = append(repos, sources[i])
 		case toolkit.SourceKindDoc:
-			docs = append(docs, s)
+			docs = append(docs, sources[i])
 		default:
-			docs = append(docs, s)
+			docs = append(docs, sources[i])
 		}
 	}
 
 	if len(repos) > 0 {
 		b.WriteString("### Repositories\n\n")
-		for i, s := range repos {
-			b.WriteString(fmt.Sprintf("%d. **%s** — %s (`%s`)\n", i+1, s.Name, s.Purpose, s.URI))
+		for i := range repos {
+			b.WriteString(fmt.Sprintf("%d. **%s** — %s (`%s`)\n", i+1, repos[i].Name, repos[i].Purpose, repos[i].URI))
 		}
 		b.WriteString("\n")
 	}
 
 	if len(docs) > 0 {
 		b.WriteString("### Documentation\n\n")
-		for i, s := range docs {
-			b.WriteString(fmt.Sprintf("%d. [%s](%s)\n", i+1, s.Name, s.URI))
+		for i := range docs {
+			b.WriteString(fmt.Sprintf("%d. [%s](%s)\n", i+1, docs[i].Name, docs[i].URI))
 		}
 		b.WriteString("\n")
 	}

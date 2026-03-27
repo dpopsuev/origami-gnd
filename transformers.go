@@ -211,15 +211,17 @@ func (t *treeTransformer) Transform(ctx context.Context, _ *engine.TransformerCo
 		return &CodeContext{}, nil
 	}
 
-	var trees []RepoTree
-	for _, src := range t.catalog.Sources() {
+	catalogSources := t.catalog.Sources()
+	trees := make([]RepoTree, 0, len(catalogSources))
+	for i := range catalogSources {
+		src := &catalogSources[i]
 		if src.Kind != toolkit.SourceKindRepo {
 			continue
 		}
-		if err := t.reader.Ensure(ctx, src); err != nil {
+		if err := t.reader.Ensure(ctx, catalogSources[i]); err != nil {
 			continue
 		}
-		entries, err := t.reader.List(ctx, src, "", 3)
+		entries, err := t.reader.List(ctx, catalogSources[i], "", 3)
 		if err != nil {
 			continue
 		}
@@ -257,16 +259,17 @@ func (t *searchTransformer) Transform(ctx context.Context, tc *engine.Transforme
 		query += " " + kw
 	}
 
+	searchSources := t.catalog.Sources()
 	var hits []SearchHit
-	for _, src := range t.catalog.Sources() {
-		if src.Kind != toolkit.SourceKindRepo {
+	for i := range searchSources {
+		if searchSources[i].Kind != toolkit.SourceKindRepo {
 			continue
 		}
-		results, err := t.reader.Search(ctx, src, query, 20)
+		results, err := t.reader.Search(ctx, searchSources[i], query, 20)
 		if err != nil {
 			continue
 		}
-		repoName := fmt.Sprintf("%s/%s", src.Org, src.Name)
+		repoName := fmt.Sprintf("%s/%s", searchSources[i].Org, searchSources[i].Name)
 		for _, r := range results {
 			hits = append(hits, SearchHit{
 				Repo:    repoName,
@@ -368,21 +371,28 @@ func extractSearchKeywords(ws *circuit.WalkerState) []string {
 	var keywords []string
 
 	// Read test name from failure params (works with any struct that has TestName).
-	if fp := ws.Context["params.failure"]; fp != nil {
-		if named, ok := fp.(interface{ GetTestName() string }); ok {
-			if tn := named.GetTestName(); tn != "" {
-				keywords = append(keywords, tn)
-			}
-		}
-		// Fall back to map-based access for generic maps.
-		if m, ok := fp.(map[string]any); ok {
-			if tn, ok := m["test_name"].(string); ok && tn != "" {
-				keywords = append(keywords, tn)
-			}
-		}
-	}
+	keywords = append(keywords, extractFailureKeywords(ws.Context["params.failure"])...)
 
 	return keywords
+}
+
+// extractFailureKeywords pulls search keywords from a failure params value.
+func extractFailureKeywords(fp any) []string {
+	if fp == nil {
+		return nil
+	}
+	if named, ok := fp.(interface{ GetTestName() string }); ok {
+		if tn := named.GetTestName(); tn != "" {
+			return []string{tn}
+		}
+	}
+	// Fall back to map-based access for generic maps.
+	if m, ok := fp.(map[string]any); ok {
+		if tn, ok := m["test_name"].(string); ok && tn != "" {
+			return []string{tn}
+		}
+	}
+	return nil
 }
 
 // outputArtifact extracts a typed value from a walker's Outputs by node name.

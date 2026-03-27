@@ -10,14 +10,14 @@ import (
 
 type stubReader struct{}
 
-func (stubReader) Ensure(_ context.Context, _ toolkit.Source) error { return nil }
-func (stubReader) Search(_ context.Context, _ toolkit.Source, _ string, _ int) ([]toolkit.SearchResult, error) {
+func (stubReader) Ensure(_ context.Context, _ toolkit.Source) error { return nil }                           //nolint:gocritic // hugeParam: interface toolkit.SourceReader requires Source by value
+func (stubReader) Search(_ context.Context, _ toolkit.Source, _ string, _ int) ([]toolkit.SearchResult, error) { //nolint:gocritic // hugeParam: interface toolkit.SourceReader requires Source by value
 	return nil, nil
 }
-func (stubReader) Read(_ context.Context, _ toolkit.Source, _ string) ([]byte, error) {
+func (stubReader) Read(_ context.Context, _ toolkit.Source, _ string) ([]byte, error) { //nolint:gocritic // hugeParam: interface toolkit.SourceReader requires Source by value
 	return nil, nil
 }
-func (stubReader) List(_ context.Context, _ toolkit.Source, _ string, _ int) ([]toolkit.ContentEntry, error) {
+func (stubReader) List(_ context.Context, _ toolkit.Source, _ string, _ int) ([]toolkit.ContentEntry, error) { //nolint:gocritic // hugeParam: interface toolkit.SourceReader requires Source by value
 	return nil, nil
 }
 

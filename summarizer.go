@@ -89,13 +89,13 @@ func (ba BudgetAllocator) Allocate(sources []toolkit.Source) []BudgetEntry {
 	}
 
 	entries := make([]BudgetEntry, len(sources))
-	for i, src := range sources {
+	for i := range sources {
 		strategy := StrategySummary
-		if src.IsAlwaysRead() {
+		if sources[i].IsAlwaysRead() {
 			strategy = StrategyFull
 		}
 		entries[i] = BudgetEntry{
-			SourceName: src.Name,
+			SourceName: sources[i].Name,
 			Budget:     perSource,
 			Strategy:   strategy,
 		}

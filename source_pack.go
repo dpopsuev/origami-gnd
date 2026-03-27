@@ -99,7 +99,7 @@ func loadPackRecursive(path string, resolver PackResolver, seen map[string]bool)
 // Later entries override earlier ones (last-wins).
 func mergeRepos(base, overlay []SourcePackRepo) []SourcePackRepo {
 	index := make(map[string]int)
-	var merged []SourcePackRepo
+	merged := make([]SourcePackRepo, 0, len(base)+len(overlay))
 
 	for _, r := range base {
 		key := r.Org + "/" + r.Name
@@ -141,7 +141,7 @@ func mergeDocs(base, overlay []string) []string {
 // BranchPattern. If a repo has no BranchPattern, the pack-level VersionKey
 // is substituted as "{version_key}" so ResolveBranch can still interpolate.
 func (p *SourcePack) ToSources(attrs map[string]string) []toolkit.Source {
-	var sources []toolkit.Source
+	sources := make([]toolkit.Source, 0, len(p.Repos)+len(p.Docs))
 	for _, r := range p.Repos {
 		pattern := r.BranchPattern
 		if pattern == "" && p.VersionKey != "" {

@@ -22,11 +22,11 @@ type stubDriver struct {
 
 func (d *stubDriver) Handles() toolkit.SourceKind { return d.kind }
 
-func (d *stubDriver) Ensure(_ context.Context, _ toolkit.Source) error {
+func (d *stubDriver) Ensure(_ context.Context, _ toolkit.Source) error { //nolint:gocritic // hugeParam: interface toolkit.Driver requires Source by value
 	return d.ensureErr
 }
 
-func (d *stubDriver) Search(_ context.Context, src toolkit.Source, query string, max int) ([]toolkit.SearchResult, error) {
+func (d *stubDriver) Search(_ context.Context, src toolkit.Source, query string, maxResults int) ([]toolkit.SearchResult, error) { //nolint:gocritic // hugeParam: interface toolkit.Driver requires Source by value
 	if d.searchResult != nil {
 		return d.searchResult, nil
 	}
@@ -38,14 +38,14 @@ func (d *stubDriver) Search(_ context.Context, src toolkit.Source, query string,
 	}}, nil
 }
 
-func (d *stubDriver) Read(_ context.Context, src toolkit.Source, path string) ([]byte, error) {
+func (d *stubDriver) Read(_ context.Context, src toolkit.Source, path string) ([]byte, error) { //nolint:gocritic // hugeParam: interface toolkit.Driver requires Source by value
 	if d.readResult != nil {
 		return d.readResult, nil
 	}
 	return []byte(fmt.Sprintf("content of %s from %s", path, src.Name)), nil
 }
 
-func (d *stubDriver) List(_ context.Context, _ toolkit.Source, _ string, _ int) ([]toolkit.ContentEntry, error) {
+func (d *stubDriver) List(_ context.Context, _ toolkit.Source, _ string, _ int) ([]toolkit.ContentEntry, error) { //nolint:gocritic // hugeParam: interface toolkit.Driver requires Source by value
 	if d.listResult != nil {
 		return d.listResult, nil
 	}
@@ -163,9 +163,10 @@ func TestRouter_Register(t *testing.T) {
 }
 
 func TestRouter_ReaderInterface(t *testing.T) {
-	var r toolkit.SourceReader = dsr.NewRouter()
+	r := dsr.NewRouter()
+	var _ toolkit.SourceReader = r // compile-time interface check
 	if r == nil {
-		t.Fatal("NewRouter should satisfy Reader interface")
+		t.Fatal("NewRouter should not return nil")
 	}
 }
 

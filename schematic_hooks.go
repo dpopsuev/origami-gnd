@@ -35,7 +35,7 @@ func Hooks() engine.SessionHooks {
 	}
 }
 
-func createSession(_ context.Context, params engine.SessionParams) (*engine.SessionConfig, error) {
+func createSession(_ context.Context, params engine.SessionParams) (*engine.SessionConfig, error) { //nolint:gocritic // hugeParam: callback signature defined by engine.SessionHooks
 	extra := params.Extra
 
 	// Extract search keywords from forwarded context.

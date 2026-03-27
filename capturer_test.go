@@ -18,13 +18,13 @@ type capturerStubDriver struct {
 
 func (d *capturerStubDriver) Handles() toolkit.SourceKind { return d.kind }
 
-func (d *capturerStubDriver) Ensure(_ context.Context, _ toolkit.Source) error { return nil }
+func (d *capturerStubDriver) Ensure(_ context.Context, _ toolkit.Source) error { return nil } //nolint:gocritic // hugeParam: interface toolkit.Driver requires Source by value
 
-func (d *capturerStubDriver) Search(_ context.Context, _ toolkit.Source, _ string, _ int) ([]toolkit.SearchResult, error) {
+func (d *capturerStubDriver) Search(_ context.Context, _ toolkit.Source, _ string, _ int) ([]toolkit.SearchResult, error) { //nolint:gocritic // hugeParam: interface toolkit.Driver requires Source by value
 	return nil, nil
 }
 
-func (d *capturerStubDriver) Read(_ context.Context, src toolkit.Source, path string) ([]byte, error) {
+func (d *capturerStubDriver) Read(_ context.Context, src toolkit.Source, path string) ([]byte, error) { //nolint:gocritic // hugeParam: interface toolkit.Driver requires Source by value
 	if files, ok := d.files[src.Name]; ok {
 		if data, ok := files[path]; ok {
 			return data, nil
@@ -40,12 +40,12 @@ func (d *capturerStubDriver) Read(_ context.Context, src toolkit.Source, path st
 	return nil, os.ErrNotExist
 }
 
-func (d *capturerStubDriver) List(_ context.Context, src toolkit.Source, _ string, _ int) ([]toolkit.ContentEntry, error) {
+func (d *capturerStubDriver) List(_ context.Context, src toolkit.Source, _ string, _ int) ([]toolkit.ContentEntry, error) { //nolint:gocritic // hugeParam: interface toolkit.Driver requires Source by value
 	files, ok := d.files[src.Name]
 	if !ok {
 		return nil, nil
 	}
-	var entries []toolkit.ContentEntry
+	entries := make([]toolkit.ContentEntry, 0, len(files))
 	for path := range files {
 		if path == "/" {
 			continue

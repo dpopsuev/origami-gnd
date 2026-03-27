@@ -84,9 +84,9 @@ func (g *DepGraph) TopologicalSort(sourceNames []string) ([]string, error) {
 func (g *DepGraph) OrderSources(sources []toolkit.Source) ([]toolkit.Source, error) {
 	names := make([]string, len(sources))
 	byName := make(map[string]toolkit.Source, len(sources))
-	for i, s := range sources {
-		names[i] = s.Name
-		byName[s.Name] = s
+	for i := range sources {
+		names[i] = sources[i].Name
+		byName[sources[i].Name] = sources[i]
 	}
 
 	ordered, err := g.TopologicalSort(names)

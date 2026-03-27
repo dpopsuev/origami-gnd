@@ -22,7 +22,7 @@ func NewMCPReader(caller subprocess.ToolCaller) *MCPReader {
 	return &MCPReader{caller: caller}
 }
 
-func (r *MCPReader) Ensure(ctx context.Context, src toolkit.Source) error {
+func (r *MCPReader) Ensure(ctx context.Context, src toolkit.Source) error { //nolint:gocritic // hugeParam: interface toolkit.SourceReader requires Source by value
 	args := map[string]any{"source": src}
 	result, err := r.caller.CallTool(ctx, "gnd_ensure", args)
 	if err != nil {
@@ -34,7 +34,7 @@ func (r *MCPReader) Ensure(ctx context.Context, src toolkit.Source) error {
 	return nil
 }
 
-func (r *MCPReader) Search(ctx context.Context, src toolkit.Source, query string, maxResults int) ([]toolkit.SearchResult, error) {
+func (r *MCPReader) Search(ctx context.Context, src toolkit.Source, query string, maxResults int) ([]toolkit.SearchResult, error) { //nolint:gocritic // hugeParam: interface toolkit.SourceReader requires Source by value
 	args := map[string]any{
 		"source":      src,
 		"query":       query,
@@ -47,7 +47,7 @@ func (r *MCPReader) Search(ctx context.Context, src toolkit.Source, query string
 	return results, nil
 }
 
-func (r *MCPReader) Read(ctx context.Context, src toolkit.Source, path string) ([]byte, error) {
+func (r *MCPReader) Read(ctx context.Context, src toolkit.Source, path string) ([]byte, error) { //nolint:gocritic // hugeParam: interface toolkit.SourceReader requires Source by value
 	args := map[string]any{
 		"source": src,
 		"path":   path,
@@ -62,7 +62,7 @@ func (r *MCPReader) Read(ctx context.Context, src toolkit.Source, path string) (
 	return []byte(firstText(result)), nil
 }
 
-func (r *MCPReader) List(ctx context.Context, src toolkit.Source, root string, maxDepth int) ([]toolkit.ContentEntry, error) {
+func (r *MCPReader) List(ctx context.Context, src toolkit.Source, root string, maxDepth int) ([]toolkit.ContentEntry, error) { //nolint:gocritic // hugeParam: interface toolkit.SourceReader requires Source by value
 	args := map[string]any{
 		"source":    src,
 		"root":      root,

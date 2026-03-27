@@ -42,17 +42,17 @@ func (r *SourceRouter) Route(req RouteRequest) []toolkit.Source {
 	seen := make(map[string]bool, len(sources))
 	matched := make([]toolkit.Source, 0, len(sources))
 
-	for _, src := range sources {
-		if src.IsAlwaysRead() {
-			seen[src.Name] = true
-			matched = append(matched, src)
+	for i := range sources {
+		if sources[i].IsAlwaysRead() {
+			seen[sources[i].Name] = true
+			matched = append(matched, sources[i])
 			continue
 		}
 		for _, rule := range r.rules {
-			if rule.Match(src, req) {
-				if !seen[src.Name] {
-					seen[src.Name] = true
-					matched = append(matched, src)
+			if rule.Match(sources[i], req) {
+				if !seen[sources[i].Name] {
+					seen[sources[i].Name] = true
+					matched = append(matched, sources[i])
 				}
 				break
 			}
@@ -60,8 +60,8 @@ func (r *SourceRouter) Route(req RouteRequest) []toolkit.Source {
 	}
 
 	alwaysCount := 0
-	for _, src := range matched {
-		if src.IsAlwaysRead() {
+	for i := range matched {
+		if matched[i].IsAlwaysRead() {
 			alwaysCount++
 		}
 	}
@@ -89,7 +89,7 @@ type TagMatchRule struct {
 }
 
 // Match returns true if source.Tags[k] == v for every (k, v) in Required.
-func (r TagMatchRule) Match(src toolkit.Source, _ RouteRequest) bool {
+func (r TagMatchRule) Match(src toolkit.Source, _ RouteRequest) bool { //nolint:gocritic // hugeParam: interface RouteRule requires Source by value
 	for k, v := range r.Required {
 		if src.Tags[k] != v {
 			return false
@@ -105,7 +105,7 @@ type RequestTagMatchRule struct{}
 
 // Match returns true if all overlapping tag keys have equal values.
 // Sources with no tags always match (no constraints to violate).
-func (RequestTagMatchRule) Match(src toolkit.Source, req RouteRequest) bool {
+func (RequestTagMatchRule) Match(src toolkit.Source, req RouteRequest) bool { //nolint:gocritic // hugeParam: interface RouteRule requires Source by value
 	if len(src.Tags) == 0 || len(req.Tags) == 0 {
 		return true
 	}
@@ -138,10 +138,10 @@ func (r *SourceRouter) LayeredRoute(baseTags, versionTags, investigationTags map
 	seen := make(map[string]bool, len(sources))
 	var result []toolkit.Source
 
-	for _, src := range sources {
-		if src.IsAlwaysRead() && !seen[src.Name] {
-			seen[src.Name] = true
-			result = append(result, src)
+	for i := range sources {
+		if sources[i].IsAlwaysRead() && !seen[sources[i].Name] {
+			seen[sources[i].Name] = true
+			result = append(result, sources[i])
 		}
 	}
 
@@ -150,13 +150,13 @@ func (r *SourceRouter) LayeredRoute(baseTags, versionTags, investigationTags map
 			continue
 		}
 		rule := TagMatchRule{Required: tags}
-		for _, src := range sources {
-			if seen[src.Name] {
+		for i := range sources {
+			if seen[sources[i].Name] {
 				continue
 			}
-			if rule.Match(src, RouteRequest{}) {
-				seen[src.Name] = true
-				result = append(result, src)
+			if rule.Match(sources[i], RouteRequest{}) {
+				seen[sources[i].Name] = true
+				result = append(result, sources[i])
 			}
 		}
 	}

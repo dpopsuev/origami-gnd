@@ -16,22 +16,22 @@ type txReader struct {
 	files    map[string][]byte
 }
 
-func (s *txReader) Ensure(_ context.Context, src toolkit.Source) error {
+func (s *txReader) Ensure(_ context.Context, src toolkit.Source) error { //nolint:gocritic // hugeParam: interface toolkit.SourceReader requires Source by value
 	s.ensured = append(s.ensured, src)
 	return nil
 }
 
-func (s *txReader) List(_ context.Context, src toolkit.Source, _ string, _ int) ([]toolkit.ContentEntry, error) {
+func (s *txReader) List(_ context.Context, src toolkit.Source, _ string, _ int) ([]toolkit.ContentEntry, error) { //nolint:gocritic // hugeParam: interface toolkit.SourceReader requires Source by value
 	key := src.Org + "/" + src.Name
 	return s.listings[key], nil
 }
 
-func (s *txReader) Search(_ context.Context, src toolkit.Source, _ string, _ int) ([]toolkit.SearchResult, error) {
+func (s *txReader) Search(_ context.Context, src toolkit.Source, _ string, _ int) ([]toolkit.SearchResult, error) { //nolint:gocritic // hugeParam: interface toolkit.SourceReader requires Source by value
 	key := src.Org + "/" + src.Name
 	return s.searches[key], nil
 }
 
-func (s *txReader) Read(_ context.Context, src toolkit.Source, path string) ([]byte, error) {
+func (s *txReader) Read(_ context.Context, src toolkit.Source, path string) ([]byte, error) { //nolint:gocritic // hugeParam: interface toolkit.SourceReader requires Source by value
 	key := src.Org + "/" + src.Name + ":" + path
 	if data, ok := s.files[key]; ok {
 		return data, nil
@@ -238,7 +238,7 @@ func TestSplitRepoKey(t *testing.T) {
 			t.Errorf("splitRepoKey(%q) = %v, want nil", tt.input, got)
 		}
 		if tt.want != nil {
-			if got == nil || got[0] != tt.want[0] || got[1] != tt.want[1] {
+			if len(got) != 2 || got[0] != tt.want[0] || got[1] != tt.want[1] {
 				t.Errorf("splitRepoKey(%q) = %v, want %v", tt.input, got, tt.want)
 			}
 		}
