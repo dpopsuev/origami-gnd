@@ -7,4 +7,5 @@ metadata:
   description: "Gather & Diffuse — pluggable code context gathering and synthesis"
 spec:
   version: "1.0.0"
+  session_factory: "Factory()"
   resolver: SchematicResolver
