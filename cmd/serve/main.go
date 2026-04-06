@@ -31,12 +31,12 @@ func main() {
 }
 
 func serve(port int) int {
-	hooks := dsr.Hooks()
-	cfg := fwmcp.SessionHooksToConfig(hooks)
+	factory := dsr.Factory()
+	cfg := fwmcp.SessionFactoryToConfig(factory)
 	cfg.Name = "origami-gnd"
 	cfg.Version = "1.0"
 
-	server := fwmcp.NewCircuitServer(cfg)
+	server := fwmcp.NewCircuitServer(&cfg)
 	defer server.Shutdown()
 
 	mux := http.NewServeMux()

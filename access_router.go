@@ -68,7 +68,7 @@ func (r *AccessRouter) driver(kind toolkit.SourceKind) (Driver, error) {
 	return d, nil
 }
 
-func (r *AccessRouter) Ensure(ctx context.Context, src toolkit.Source) error { //nolint:gocritic // hugeParam: interface toolkit.SourceReader requires Source by value
+func (r *AccessRouter) Ensure(ctx context.Context, src *toolkit.Source) error {
 	d, err := r.driver(src.Kind)
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func (r *AccessRouter) Ensure(ctx context.Context, src toolkit.Source) error { /
 	return d.Ensure(ctx, src)
 }
 
-func (r *AccessRouter) Search(ctx context.Context, src toolkit.Source, query string, maxResults int) ([]toolkit.SearchResult, error) { //nolint:gocritic // hugeParam: interface toolkit.SourceReader requires Source by value
+func (r *AccessRouter) Search(ctx context.Context, src *toolkit.Source, query string, maxResults int) ([]toolkit.SearchResult, error) {
 	d, err := r.driver(src.Kind)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func (r *AccessRouter) Search(ctx context.Context, src toolkit.Source, query str
 	return d.Search(ctx, src, query, maxResults)
 }
 
-func (r *AccessRouter) Read(ctx context.Context, src toolkit.Source, path string) ([]byte, error) { //nolint:gocritic // hugeParam: interface toolkit.SourceReader requires Source by value
+func (r *AccessRouter) Read(ctx context.Context, src *toolkit.Source, path string) ([]byte, error) {
 	d, err := r.driver(src.Kind)
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func (r *AccessRouter) Read(ctx context.Context, src toolkit.Source, path string
 	return d.Read(ctx, src, path)
 }
 
-func (r *AccessRouter) List(ctx context.Context, src toolkit.Source, root string, maxDepth int) ([]toolkit.ContentEntry, error) { //nolint:gocritic // hugeParam: interface toolkit.SourceReader requires Source by value
+func (r *AccessRouter) List(ctx context.Context, src *toolkit.Source, root string, maxDepth int) ([]toolkit.ContentEntry, error) {
 	d, err := r.driver(src.Kind)
 	if err != nil {
 		return nil, err

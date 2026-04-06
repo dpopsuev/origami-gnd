@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/dpopsuev/origami/agentport"
 	"github.com/dpopsuev/origami/circuit"
 	"github.com/dpopsuev/origami/engine"
-	bd "github.com/dpopsuev/bugle/dispatch"
 	"github.com/dpopsuev/origami/toolkit"
 )
 
@@ -66,7 +66,7 @@ func TransformerComponent(reader toolkit.SourceReader, catalog toolkit.SourceCat
 // When disp is nil, the transformer passes through CodeContext from the read
 // node (deterministic mode). When set, it builds a prompt and dispatches via
 // the MuxDispatcher for LLM synthesis.
-func SynthesizeComponent(disp bd.Dispatcher) *engine.Component {
+func SynthesizeComponent(disp agentport.Dispatcher) *engine.Component {
 	return &engine.Component{
 		Namespace: "dsr",
 		Name:      "dsr-synthesize",
@@ -80,7 +80,7 @@ func SynthesizeComponent(disp bd.Dispatcher) *engine.Component {
 // a prompt, and dispatches via MuxDispatcher. If no dispatcher is set
 // (stub/deterministic mode), it passes through the raw CodeContext.
 type synthesizeTransformer struct {
-	dispatcher bd.Dispatcher // nil = deterministic passthrough
+	dispatcher agentport.Dispatcher // nil = deterministic passthrough
 }
 
 func (t *synthesizeTransformer) Name() string { return "dsr.synthesize" }
@@ -100,7 +100,7 @@ func (t *synthesizeTransformer) Transform(ctx context.Context, tc *engine.Transf
 	prompt := buildSynthesizePrompt(cc)
 
 	caseLabel := tc.WalkerState.ID
-	data, err := t.dispatcher.Dispatch(ctx, bd.Context{
+	data, err := t.dispatcher.Dispatch(ctx, agentport.Context{
 		CaseID:        caseLabel,
 		Step:          "synthesize",
 		PromptContent: prompt,
@@ -218,10 +218,10 @@ func (t *treeTransformer) Transform(ctx context.Context, _ *engine.TransformerCo
 		if src.Kind != toolkit.SourceKindRepo {
 			continue
 		}
-		if err := t.reader.Ensure(ctx, catalogSources[i]); err != nil {
+		if err := t.reader.Ensure(ctx, &catalogSources[i]); err != nil {
 			continue
 		}
-		entries, err := t.reader.List(ctx, catalogSources[i], "", 3)
+		entries, err := t.reader.List(ctx, &catalogSources[i], "", 3)
 		if err != nil {
 			continue
 		}
@@ -265,7 +265,7 @@ func (t *searchTransformer) Transform(ctx context.Context, tc *engine.Transforme
 		if searchSources[i].Kind != toolkit.SourceKindRepo {
 			continue
 		}
-		results, err := t.reader.Search(ctx, searchSources[i], query, 20)
+		results, err := t.reader.Search(ctx, &searchSources[i], query, 20)
 		if err != nil {
 			continue
 		}
@@ -327,7 +327,7 @@ func (t *readTransformer) Transform(ctx context.Context, tc *engine.TransformerC
 			Name: parts[1],
 			Kind: toolkit.SourceKindRepo,
 		}
-		data, err := t.reader.Read(ctx, src, sr.File)
+		data, err := t.reader.Read(ctx, &src, sr.File)
 		if err != nil {
 			continue
 		}

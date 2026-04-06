@@ -62,7 +62,7 @@ func TestCircuit_Walk(t *testing.T) {
 	}
 
 	comp := TransformerComponent(reader, catalog)
-	reg, err := engine.MergeComponents(engine.GraphRegistries{}, comp)
+	reg, err := engine.MergeComponents(&engine.GraphRegistries{}, comp)
 	if err != nil {
 		t.Fatalf("MergeComponents: %v", err)
 	}
@@ -134,7 +134,7 @@ func TestCircuit_FullWithSynthesize(t *testing.T) {
 
 	gatherComp := TransformerComponent(reader, catalog)
 	synthComp := SynthesizeComponent(nil) // deterministic passthrough
-	reg, err := engine.MergeComponents(engine.GraphRegistries{}, gatherComp, synthComp)
+	reg, err := engine.MergeComponents(&engine.GraphRegistries{}, gatherComp, synthComp)
 	if err != nil {
 		t.Fatalf("MergeComponents: %v", err)
 	}
@@ -179,7 +179,7 @@ func TestCircuit_EmptyCatalog(t *testing.T) {
 	}
 
 	comp := TransformerComponent(reader, emptyCatalog)
-	reg, err := engine.MergeComponents(engine.GraphRegistries{}, comp)
+	reg, err := engine.MergeComponents(&engine.GraphRegistries{}, comp)
 	if err != nil {
 		t.Fatalf("MergeComponents: %v", err)
 	}

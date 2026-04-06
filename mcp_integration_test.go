@@ -64,12 +64,12 @@ func TestMCPIntegration_StubDriver_RoundTrip(t *testing.T) {
 	src := toolkit.Source{Name: "integration-repo", Kind: toolkit.SourceKindRepo, URI: "https://github.com/test/repo"}
 
 	// Ensure
-	if err := reader.Ensure(ctx, src); err != nil {
+	if err := reader.Ensure(ctx, &src); err != nil {
 		t.Fatalf("Ensure: %v", err)
 	}
 
 	// Search
-	results, err := reader.Search(ctx, src, "main", 5)
+	results, err := reader.Search(ctx, &src, "main", 5)
 	if err != nil {
 		t.Fatalf("Search: %v", err)
 	}
@@ -84,7 +84,7 @@ func TestMCPIntegration_StubDriver_RoundTrip(t *testing.T) {
 	}
 
 	// Read
-	content, err := reader.Read(ctx, src, "cmd/main.go")
+	content, err := reader.Read(ctx, &src, "cmd/main.go")
 	if err != nil {
 		t.Fatalf("Read: %v", err)
 	}
@@ -93,7 +93,7 @@ func TestMCPIntegration_StubDriver_RoundTrip(t *testing.T) {
 	}
 
 	// List
-	entries, err := reader.List(ctx, src, ".", 2)
+	entries, err := reader.List(ctx, &src, ".", 2)
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}

@@ -59,7 +59,7 @@ func TestMCPReader_Ensure(t *testing.T) {
 	mock := &mockToolCaller{}
 	reader := dsr.NewMCPReader(mock)
 
-	err := reader.Ensure(context.Background(), testSource)
+	err := reader.Ensure(context.Background(), &testSource)
 	if err != nil {
 		t.Fatalf("Ensure: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestMCPReader_Search(t *testing.T) {
 	mock := &mockToolCaller{}
 	reader := dsr.NewMCPReader(mock)
 
-	results, err := reader.Search(context.Background(), testSource, "main", 5)
+	results, err := reader.Search(context.Background(), &testSource, "main", 5)
 	if err != nil {
 		t.Fatalf("Search: %v", err)
 	}
@@ -93,7 +93,7 @@ func TestMCPReader_Read(t *testing.T) {
 	mock := &mockToolCaller{}
 	reader := dsr.NewMCPReader(mock)
 
-	content, err := reader.Read(context.Background(), testSource, "main.go")
+	content, err := reader.Read(context.Background(), &testSource, "main.go")
 	if err != nil {
 		t.Fatalf("Read: %v", err)
 	}
@@ -107,7 +107,7 @@ func TestMCPReader_List(t *testing.T) {
 	mock := &mockToolCaller{}
 	reader := dsr.NewMCPReader(mock)
 
-	entries, err := reader.List(context.Background(), testSource, ".", 2)
+	entries, err := reader.List(context.Background(), &testSource, ".", 2)
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
@@ -127,7 +127,7 @@ func TestMCPReader_TransportError(t *testing.T) {
 	mock := &mockToolCaller{err: fmt.Errorf("connection refused")}
 	reader := dsr.NewMCPReader(mock)
 
-	_, err := reader.Search(context.Background(), testSource, "test", 5)
+	_, err := reader.Search(context.Background(), &testSource, "test", 5)
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -137,7 +137,7 @@ func TestMCPReader_EnsureErrorResult(t *testing.T) {
 	errMock := &errorToolCaller{errMsg: "source unavailable"}
 	reader := dsr.NewMCPReader(errMock)
 
-	err := reader.Ensure(context.Background(), testSource)
+	err := reader.Ensure(context.Background(), &testSource)
 	if err == nil {
 		t.Fatal("expected error from error result")
 	}

@@ -12,30 +12,43 @@ import (
 	"github.com/dpopsuev/origami/toolkit"
 )
 
-// Hooks returns the SessionHooks that fold-generated code calls.
-func Hooks() engine.SessionHooks {
-	return engine.SessionHooks{
-		CreateSession: createSession,
-		StepSchemas: []engine.StepSchema{
-			{
-				Name: "synthesize",
-				Defs: []toolkit.FieldDef{
-					{Name: "summary", Type: "string", Required: true, Desc: "Cohesive summary of gathered code context"},
-					{Name: "key_findings", Type: "array", Required: false, Desc: "Key findings from code analysis"},
-				},
+// gndSessionFactory implements engine.SessionFactory (and the optional
+// ReportFormatter / StepSchemaProvider interfaces) for the GND domain.
+type gndSessionFactory struct{}
+
+// CreateSession implements engine.SessionFactory.
+func (f *gndSessionFactory) CreateSession(ctx context.Context, params *engine.SessionParams) (*engine.SessionConfig, error) {
+	return createSession(ctx, params)
+}
+
+// FormatReport implements engine.ReportFormatter.
+func (f *gndSessionFactory) FormatReport(result any) (formatted string, structured any, err error) {
+	data, err := json.Marshal(result)
+	if err != nil {
+		return "", nil, fmt.Errorf("marshal gnd result: %w", err)
+	}
+	return string(data), result, nil
+}
+
+// StepSchemas implements engine.StepSchemaProvider.
+func (f *gndSessionFactory) StepSchemas() []engine.StepSchema {
+	return []engine.StepSchema{
+		{
+			Name: "synthesize",
+			Defs: []toolkit.FieldDef{
+				{Name: "summary", Type: "string", Required: true, Desc: "Cohesive summary of gathered code context"},
+				{Name: "key_findings", Type: "array", Required: false, Desc: "Key findings from code analysis"},
 			},
-		},
-		FormatReport: func(result any) (string, any, error) {
-			data, err := json.Marshal(result)
-			if err != nil {
-				return "", nil, fmt.Errorf("marshal gnd result: %w", err)
-			}
-			return string(data), result, nil
 		},
 	}
 }
 
-func createSession(_ context.Context, params engine.SessionParams) (*engine.SessionConfig, error) { //nolint:gocritic // hugeParam: callback signature defined by engine.SessionHooks
+// Factory returns the SessionFactory that fold-generated code calls.
+func Factory() engine.SessionFactory {
+	return &gndSessionFactory{}
+}
+
+func createSession(_ context.Context, params *engine.SessionParams) (*engine.SessionConfig, error) {
 	extra := params.Extra
 
 	// Extract search keywords from forwarded context.
@@ -99,7 +112,7 @@ func createSession(_ context.Context, params engine.SessionParams) (*engine.Sess
 	runFunc := func(ctx context.Context) (any, error) {
 		results := engine.BatchWalk(ctx, engine.BatchWalkConfig{
 			Def: def,
-			Shared: engine.GraphRegistries{
+			Shared: &engine.GraphRegistries{
 				Transformers: engine.TransformerRegistry{},
 			},
 			Cases: []engine.BatchCase{

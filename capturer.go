@@ -59,24 +59,23 @@ func (c *Capturer) Capture(ctx context.Context, cfg calibrate.CaptureConfig) err
 	manifest.CapturedAt = time.Now().UTC()
 
 	for i := range sources {
-		src := sources[i]
 		if err := ctx.Err(); err != nil {
 			return err
 		}
 
-		switch src.Kind {
+		switch sources[i].Kind {
 		case toolkit.SourceKindRepo:
-			entry, err := c.captureRepo(ctx, src, outDir)
+			entry, err := c.captureRepo(ctx, &sources[i], outDir)
 			if err != nil {
-				c.logger.Warn("skipping repo", "name", src.Name, "error", err)
+				c.logger.Warn("skipping repo", "name", sources[i].Name, "error", err)
 				continue
 			}
 			manifest.Repos = append(manifest.Repos, entry)
 
 		case toolkit.SourceKindDoc:
-			entry, err := c.captureDoc(ctx, src, outDir)
+			entry, err := c.captureDoc(ctx, &sources[i], outDir)
 			if err != nil {
-				c.logger.Warn("skipping doc", "name", src.Name, "error", err)
+				c.logger.Warn("skipping doc", "name", sources[i].Name, "error", err)
 				continue
 			}
 			manifest.Docs = append(manifest.Docs, entry)
@@ -86,7 +85,7 @@ func (c *Capturer) Capture(ctx context.Context, cfg calibrate.CaptureConfig) err
 	return calibrate.WriteManifest(outDir, &manifest)
 }
 
-func (c *Capturer) captureRepo(ctx context.Context, src toolkit.Source, outDir string) (calibrate.RepoEntry, error) { //nolint:gocritic // hugeParam: Source is a value type in the toolkit API
+func (c *Capturer) captureRepo(ctx context.Context, src *toolkit.Source, outDir string) (calibrate.RepoEntry, error) {
 	c.logger.Info("capturing repo", "name", src.Name, "branch", src.Branch)
 
 	if err := c.reader.Ensure(ctx, src); err != nil {
@@ -139,7 +138,7 @@ func (c *Capturer) captureRepo(ctx context.Context, src toolkit.Source, outDir s
 	}, nil
 }
 
-func (c *Capturer) captureDoc(ctx context.Context, src toolkit.Source, outDir string) (calibrate.DocEntry, error) { //nolint:gocritic // hugeParam: Source is a value type in the toolkit API
+func (c *Capturer) captureDoc(ctx context.Context, src *toolkit.Source, outDir string) (calibrate.DocEntry, error) {
 	c.logger.Info("capturing doc", "name", src.Name)
 
 	data, err := c.reader.Read(ctx, src, "/")

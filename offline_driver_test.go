@@ -24,7 +24,7 @@ func TestOfflineFSDriver_Read(t *testing.T) {
 	driver := dsr.NewOfflineFSDriver(bundle, toolkit.SourceKindRepo)
 
 	src := toolkit.Source{Name: "linuxptp-daemon", Kind: toolkit.SourceKindRepo}
-	data, err := driver.Read(ctx, src, "cmd/main.go")
+	data, err := driver.Read(ctx, &src, "cmd/main.go")
 	if err != nil {
 		t.Fatalf("Read: %v", err)
 	}
@@ -39,7 +39,7 @@ func TestOfflineFSDriver_Read_NotFound(t *testing.T) {
 	driver := dsr.NewOfflineFSDriver(bundle, toolkit.SourceKindRepo)
 
 	src := toolkit.Source{Name: "linuxptp-daemon", Kind: toolkit.SourceKindRepo}
-	_, err := driver.Read(ctx, src, "nonexistent.go")
+	_, err := driver.Read(ctx, &src, "nonexistent.go")
 	if err == nil {
 		t.Fatal("expected error for missing file")
 	}
@@ -51,7 +51,7 @@ func TestOfflineFSDriver_Search(t *testing.T) {
 	driver := dsr.NewOfflineFSDriver(bundle, toolkit.SourceKindRepo)
 
 	src := toolkit.Source{Name: "linuxptp-daemon", Kind: toolkit.SourceKindRepo}
-	results, err := driver.Search(ctx, src, "SyncClock", 10)
+	results, err := driver.Search(ctx, &src, "SyncClock", 10)
 	if err != nil {
 		t.Fatalf("Search: %v", err)
 	}
@@ -69,7 +69,7 @@ func TestOfflineFSDriver_Search_CaseInsensitive(t *testing.T) {
 	driver := dsr.NewOfflineFSDriver(bundle, toolkit.SourceKindRepo)
 
 	src := toolkit.Source{Name: "linuxptp-daemon", Kind: toolkit.SourceKindRepo}
-	results, err := driver.Search(ctx, src, "syncclock", 10)
+	results, err := driver.Search(ctx, &src, "syncclock", 10)
 	if err != nil {
 		t.Fatalf("Search: %v", err)
 	}
@@ -84,7 +84,7 @@ func TestOfflineFSDriver_List(t *testing.T) {
 	driver := dsr.NewOfflineFSDriver(bundle, toolkit.SourceKindRepo)
 
 	src := toolkit.Source{Name: "linuxptp-daemon", Kind: toolkit.SourceKindRepo}
-	entries, err := driver.List(ctx, src, ".", 0)
+	entries, err := driver.List(ctx, &src, ".", 0)
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
@@ -108,7 +108,7 @@ func TestOfflineFSDriver_Ensure_NoOp(t *testing.T) {
 	driver := dsr.NewOfflineFSDriver(bundle, toolkit.SourceKindRepo)
 
 	src := toolkit.Source{Name: "linuxptp-daemon", Kind: toolkit.SourceKindRepo}
-	if err := driver.Ensure(ctx, src); err != nil {
+	if err := driver.Ensure(ctx, &src); err != nil {
 		t.Fatalf("Ensure should be no-op: %v", err)
 	}
 }
@@ -123,7 +123,7 @@ func TestOfflineFSDriver_DocKind(t *testing.T) {
 		Kind:      toolkit.SourceKindDoc,
 		LocalPath: "docs/ptp/architecture.md",
 	}
-	data, err := driver.Read(ctx, src, "architecture.md")
+	data, err := driver.Read(ctx, &src, "architecture.md")
 	if err != nil {
 		t.Fatalf("Read doc: %v", err)
 	}

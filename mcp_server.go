@@ -27,7 +27,7 @@ func RegisterTools(server *sdkmcp.Server, router *AccessRouter) {
 			if err := json.Unmarshal(req.Params.Arguments, &args); err != nil {
 				return errToolResult("invalid arguments"), nil
 			}
-			if err := router.Ensure(ctx, args.Source); err != nil {
+			if err := router.Ensure(ctx, &args.Source); err != nil {
 				slog.Error("gnd_ensure failed", "source", args.Source.Name, "error", err)
 				return errToolResult("ensure failed for source"), nil
 			}
@@ -58,7 +58,7 @@ func RegisterTools(server *sdkmcp.Server, router *AccessRouter) {
 			if len(args.Query) > 10000 {
 				return errToolResult("query too long (max 10000 chars)"), nil
 			}
-			results, err := router.Search(ctx, args.Source, args.Query, args.MaxResults)
+			results, err := router.Search(ctx, &args.Source, args.Query, args.MaxResults)
 			if err != nil {
 				slog.Error("gnd_search failed", "source", args.Source.Name, "error", err)
 				return errToolResult("search failed"), nil
@@ -90,7 +90,7 @@ func RegisterTools(server *sdkmcp.Server, router *AccessRouter) {
 			if !fs.ValidPath(args.Path) {
 				return errToolResult("invalid path"), nil
 			}
-			content, err := router.Read(ctx, args.Source, args.Path)
+			content, err := router.Read(ctx, &args.Source, args.Path)
 			if err != nil {
 				slog.Error("gnd_read failed", "source", args.Source.Name, "path", args.Path, "error", err)
 				return errToolResult("read failed"), nil
@@ -122,7 +122,7 @@ func RegisterTools(server *sdkmcp.Server, router *AccessRouter) {
 			if args.MaxDepth <= 0 || args.MaxDepth > 10 {
 				args.MaxDepth = 3
 			}
-			entries, err := router.List(ctx, args.Source, args.Root, args.MaxDepth)
+			entries, err := router.List(ctx, &args.Source, args.Root, args.MaxDepth)
 			if err != nil {
 				slog.Error("gnd_list failed", "source", args.Source.Name, "root", args.Root, "error", err)
 				return errToolResult("list failed"), nil

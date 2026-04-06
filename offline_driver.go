@@ -34,11 +34,11 @@ func (d *OfflineFSDriver) Handles() toolkit.SourceKind {
 	return d.kind
 }
 
-func (d *OfflineFSDriver) Ensure(_ context.Context, _ toolkit.Source) error { //nolint:gocritic // hugeParam: interface toolkit.Driver requires Source by value
+func (d *OfflineFSDriver) Ensure(_ context.Context, _ *toolkit.Source) error {
 	return nil
 }
 
-func (d *OfflineFSDriver) Search(_ context.Context, src toolkit.Source, query string, maxResults int) ([]toolkit.SearchResult, error) { //nolint:gocritic // hugeParam: interface toolkit.Driver requires Source by value
+func (d *OfflineFSDriver) Search(_ context.Context, src *toolkit.Source, query string, maxResults int) ([]toolkit.SearchResult, error) {
 	root := d.sourceRoot(src)
 	var results []toolkit.SearchResult
 	queryLower := strings.ToLower(query)
@@ -72,7 +72,7 @@ func (d *OfflineFSDriver) Search(_ context.Context, src toolkit.Source, query st
 	return results, nil
 }
 
-func (d *OfflineFSDriver) Read(_ context.Context, src toolkit.Source, path string) ([]byte, error) { //nolint:gocritic // hugeParam: interface toolkit.Driver requires Source by value
+func (d *OfflineFSDriver) Read(_ context.Context, src *toolkit.Source, path string) ([]byte, error) {
 	if !fs.ValidPath(path) {
 		return nil, fmt.Errorf("offline read %s: invalid path", src.Name)
 	}
@@ -85,7 +85,7 @@ func (d *OfflineFSDriver) Read(_ context.Context, src toolkit.Source, path strin
 	return data, nil
 }
 
-func (d *OfflineFSDriver) List(_ context.Context, src toolkit.Source, root string, maxDepth int) ([]toolkit.ContentEntry, error) { //nolint:gocritic // hugeParam: interface toolkit.Driver requires Source by value
+func (d *OfflineFSDriver) List(_ context.Context, src *toolkit.Source, root string, maxDepth int) ([]toolkit.ContentEntry, error) {
 	if root != "" && !fs.ValidPath(root) {
 		return nil, fmt.Errorf("offline list %s: invalid root path", src.Name)
 	}
@@ -123,7 +123,7 @@ func (d *OfflineFSDriver) List(_ context.Context, src toolkit.Source, root strin
 	return entries, nil
 }
 
-func (d *OfflineFSDriver) sourceRoot(src toolkit.Source) string { //nolint:gocritic // hugeParam: Source is a value type in the toolkit API
+func (d *OfflineFSDriver) sourceRoot(src *toolkit.Source) string {
 	switch d.kind {
 	case toolkit.SourceKindRepo:
 		return "repos/" + src.Name
